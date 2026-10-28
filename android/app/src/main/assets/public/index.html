@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Görev Takip</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Public+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f6f2e9;
+    --surface:#ffffff;
+    --surface-2:#faf6ee;
+    --border:#e7e0cf;
+    --text:#211d16;
+    --text-dim:#6c6454;
+    --text-faint:#9d9484;
+    --accent:#b8872b;
+    --accent-2:#8457c9;
+    --accent-dim:#f3e8cf;
+    --shadow:0 1px 2px rgba(40,30,10,0.06), 0 2px 10px rgba(40,30,10,0.05);
+    --shadow-hover:0 8px 22px rgba(40,30,10,0.12);
+
+    --prio-high:#b8394a; --prio-high-bg:#f8e7e8;
+    --prio-med:#b2832c;  --prio-med-bg:#f6edd9;
+    --prio-low:#227a5c;  --prio-low-bg:#dff1e8;
+
+    --age-fresh:#227a5c; --age-fresh-bg:#dff1e8;
+    --age-warn:#b2832c;  --age-warn-bg:#f6edd9;
+    --age-urgent:#b8394a; --age-urgent-bg:#f8e7e8;
+
+    --page-grad: linear-gradient(160deg,#faf7f0 0%,#f5efdf 48%,#f7f1e6 100%);
+  }
+  *{box-sizing:border-box;}
+  body.dark{
+    --bg:#0d0e12; --surface:#16181f; --surface-2:#1b1e26; --border:#2a2d38;
+    --text:#f1ede2; --text-dim:#b3ac9c; --text-faint:#7b7666;
+    --accent:#e3b35c; --accent-2:#a78bfa; --accent-dim:#2c2412;
+    --shadow:0 1px 2px rgba(0,0,0,0.35), 0 2px 10px rgba(0,0,0,0.25);
+    --shadow-hover:0 10px 26px rgba(0,0,0,0.45);
+    --prio-high:#e2707e; --prio-high-bg:#33191c;
+    --prio-med:#e3b35c;  --prio-med-bg:#332714;
+    --prio-low:#5cc8a0;  --prio-low-bg:#102a21;
+    --age-fresh:#5cc8a0; --age-fresh-bg:#102a21;
+    --age-warn:#e3b35c;  --age-warn-bg:#332714;
+    --age-urgent:#e2707e; --age-urgent-bg:#33191c;
+    --page-grad: linear-gradient(160deg,#0b0c10 0%,#111319 55%,#0e0d12 100%);
+  }
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family:"Public Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    letter-spacing:.1px;
+    background:var(--page-grad); background-attachment:fixed;
+    color:var(--text); -webkit-font-smoothing:antialiased; transition:background .2s,color .2s;
+  }
+  button{font-family:inherit;} input,textarea,select{font-family:inherit;}
+
+  .app{max-width:1080px;margin:0 auto;padding:0 20px 60px;}
+  header.topbar{position:sticky;top:0;z-index:20;background:transparent;backdrop-filter:blur(6px);padding:18px 20px 0;max-width:1080px;margin:0 auto;}
+  .topbar-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+  .brand{display:flex;align-items:center;gap:10px;}
+  .brand .logo{
+    width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--accent) 0%,var(--accent-2) 100%);
+    display:flex;align-items:center;justify-content:center;font-size:19px;box-shadow:0 4px 14px rgba(184,135,43,0.35);
+  }
+  .brand h1{
+    font-family:'Libre Caslon Display',Georgia,serif;font-size:21px;margin:0;font-weight:400;
+    background:linear-gradient(90deg,var(--accent),var(--accent-2));-webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .brand .sub{font-size:11.5px;color:var(--text-faint);margin-top:2px;}
+
+  .topbar-actions{display:flex;align-items:center;gap:8px;}
+  .icon-btn{
+    width:40px;height:40px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--text-dim);
+    cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;transition:background .15s,transform .1s,box-shadow .15s;
+  }
+  .icon-btn:hover{background:var(--surface-2);transform:translateY(-1px);}
+  .icon-btn:active{transform:scale(0.94);}
+  .icon-btn.active{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#1c1506;border-color:transparent;box-shadow:0 4px 10px rgba(184,135,43,0.35);}
+
+  .btn{border:none;border-radius:10px;padding:9px 16px;font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:transform .1s,opacity .15s;}
+  .btn:active{transform:scale(0.97);}
+  .btn-primary{background:linear-gradient(135deg,var(--accent) 0%,#d4a239 55%,var(--accent) 100%);color:#211705;font-weight:700;box-shadow:0 6px 18px rgba(184,135,43,0.35);}
+  .btn-primary:hover{opacity:.92;transform:translateY(-1px);}
+  .btn-ghost{background:transparent;color:var(--text-dim);border:1px solid var(--border);}
+  .btn-ghost:hover{background:var(--surface-2);}
+  .btn-sm{padding:6px 11px;font-size:12.5px;border-radius:8px;}
+  .btn-danger{background:transparent;color:var(--prio-high);border:1px solid var(--prio-high);}
+  .btn-danger:hover{background:var(--prio-high-bg);}
+
+  .tabs{display:inline-flex;gap:3px;margin-top:18px;padding:4px;border-radius:14px;background:var(--surface-2);border:1px solid var(--border);}
+  .tab{padding:8px 18px;font-size:13.5px;font-weight:700;color:var(--text-faint);cursor:pointer;border-radius:10px;user-select:none;transition:all .15s;}
+  .tab.active{color:#1c1506;background:linear-gradient(135deg,var(--accent),#d4a239);box-shadow:0 4px 10px rgba(184,135,43,0.3);}
+  .tab:hover:not(.active){color:var(--text);background:var(--surface);}
+
+  .banner{margin-top:16px;padding:12px 16px;border-radius:8px;background:var(--age-urgent-bg);border:1px solid rgba(184,57,74,0.25);display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--text);}
+  .banner .banner-close{margin-left:auto;background:none;border:none;color:var(--text-faint);cursor:pointer;font-size:15px;}
+  .banner b{font-weight:700;}
+
+  main{padding-top:18px;}
+
+  .filter-row{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+  .filter-row select, .filter-row input[type="search"], .filter-row input[type="number"]{
+    padding:8px 13px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:13px;box-shadow:var(--shadow);
+  }
+  .filter-row input[type="number"]{width:68px;}
+  .filter-row .threshold{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-dim);}
+  .filter-row .spacer{flex:1;}
+  .task-count-pill{font-size:12px;color:var(--text-faint);}
+
+  .empty-hint{font-size:12.5px;color:var(--text-faint);text-align:center;padding:30px 6px;border:1px dashed var(--border);border-radius:12px;margin-top:10px;}
+
+  .req-list{display:flex;flex-direction:column;gap:10px;}
+  .req-row{
+    background:var(--surface);border-radius:16px;padding:16px 18px;box-shadow:var(--shadow);
+    display:flex;align-items:flex-start;gap:14px;border-left:3px solid var(--border);cursor:pointer;
+    transition:box-shadow .18s,transform .12s,border-color .18s;
+  }
+  .req-row:hover{box-shadow:var(--shadow-hover);transform:translateY(-2px);}
+  .req-row.age-fresh{border-left-color:var(--age-fresh);}
+  .req-row.age-warn{border-left-color:var(--age-warn);}
+  .req-row.age-urgent{border-left-color:var(--age-urgent);}
+  .req-row.resolved{opacity:.6;}
+  .req-row.resolved .req-summary{text-decoration:line-through;}
+
+  .req-source{
+    width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:12.5px;flex-shrink:0;font-family:'Libre Caslon Display',Georgia,serif;font-weight:400;
+    margin-top:1px;box-shadow:inset 0 0 0 1px rgba(0,0,0,0.04);
+  }
+  .req-main{flex:1;min-width:0;}
+  .req-top{display:flex;flex-direction:column;gap:3px;}
+  .req-contact{font-family:'Libre Caslon Display',Georgia,serif;font-weight:400;font-size:15.5px;letter-spacing:.1px;}
+  .req-summary{font-size:12.5px;color:var(--text-faint);font-weight:500;}
+  .req-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:10px;}
+  .badge{font-size:10.5px;padding:3px 9px;border-radius:7px;font-weight:700;white-space:nowrap;letter-spacing:.15px;}
+  .badge-prio.prio-high{background:var(--prio-high-bg);color:var(--prio-high);}
+  .badge-prio.prio-medium{background:var(--prio-med-bg);color:var(--prio-med);}
+  .badge-prio.prio-low{background:var(--prio-low-bg);color:var(--prio-low);}
+  .badge-age{background:var(--surface-2);color:var(--text-dim);border:1px solid var(--border);}
+  .badge-age.age-fresh{background:var(--age-fresh-bg);color:var(--age-fresh);border-color:transparent;}
+  .badge-age.age-warn{background:var(--age-warn-bg);color:var(--age-warn);border-color:transparent;}
+  .badge-age.age-urgent{background:var(--age-urgent-bg);color:var(--age-urgent);border-color:transparent;}
+  .badge-dur{background:var(--surface-2);color:var(--text-dim);border:1px solid var(--border);}
+
+  .req-actions{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+
+  .overlay{position:fixed;inset:0;background:rgba(15,18,22,0.5);display:none;align-items:flex-start;justify-content:center;padding:5vh 16px;z-index:100;overflow-y:auto;}
+  .overlay.show{display:flex;}
+  .modal{background:var(--surface);border-radius:18px;max-width:460px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.3);overflow:hidden;}
+  .modal-head{display:flex;align-items:center;padding:16px 18px;border-bottom:1px solid var(--border);background:linear-gradient(90deg,rgba(184,135,43,0.10),rgba(132,87,201,0.08));}
+  .modal-head h2{font-family:'Libre Caslon Display',Georgia,serif;font-weight:400;font-size:18px;margin:0;flex:1;}
+  .modal-body{padding:16px 18px;display:flex;flex-direction:column;gap:14px;max-height:70vh;overflow-y:auto;}
+  .field label{display:block;font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--text-faint);margin-bottom:6px;}
+  .field input[type="text"],.field input[type="datetime-local"],.field textarea,.field select{
+    width:100%;padding:9px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font-size:13.5px;
+  }
+  .field textarea{resize:vertical;min-height:56px;}
+  .row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .choice-row{display:flex;gap:8px;flex-wrap:wrap;}
+  .choice-row label{
+    flex:1;min-width:70px;text-align:center;padding:8px 4px;border-radius:8px;border:1.5px solid var(--border);
+    font-size:12px;font-weight:600;cursor:pointer;color:var(--text-dim);display:flex;align-items:center;justify-content:center;gap:5px;
+  }
+  .choice-row input{display:none;}
+  .choice-row label.sel-low{border-color:var(--prio-low);background:var(--prio-low-bg);color:var(--prio-low);}
+  .choice-row label.sel-medium{border-color:var(--prio-med);background:var(--prio-med-bg);color:var(--prio-med);}
+  .choice-row label.sel-high{border-color:var(--prio-high);background:var(--prio-high-bg);color:var(--prio-high);}
+  .choice-row label.sel-src{border-color:var(--accent);background:var(--accent-dim);color:var(--accent);}
+
+  .modal-foot{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-top:1px solid var(--border);}
+  .modal-foot .right{display:flex;gap:8px;}
+
+  .toast-wrap{position:fixed;bottom:18px;right:18px;display:flex;flex-direction:column;gap:8px;z-index:200;}
+  .toast{background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow-hover);border-radius:10px;padding:10px 14px;font-size:13px;max-width:280px;border-left:3px solid var(--age-urgent);animation:slidein .18s ease-out;}
+  @keyframes slidein{from{transform:translateY(8px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+
+  .footer-note{text-align:center;color:var(--text-faint);font-size:11.5px;margin-top:36px;}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-row">
+    <div class="brand">
+      <div class="logo" style="font-family:'Libre Caslon Display',Georgia,serif;font-weight:400;font-size:17px;color:#1c1506;">T</div>
+      <div>
+        <h1>Görev Takip</h1>
+        <div class="sub" id="todayLabel"></div>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <button class="icon-btn" id="notifBtn" title="Bildirimleri aç/kapat">🔔</button>
+      <button class="icon-btn" id="themeBtn" title="Koyu / açık tema">🌙</button>
+      <button class="btn btn-primary" id="addReqBtn">+ Yeni Görev</button>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" data-tab="pending">Bekleyenler</div>
+    <div class="tab" data-tab="resolved">Cevaplanan</div>
+  </div>
+  <div id="bannerSlot"></div>
+</header>
+
+<div class="app">
+<main>
+
+  <div class="filter-row">
+    <select id="filterSource"><option value="">Tüm kaynaklar</option></select>
+    <select id="filterPriority">
+      <option value="">Tüm öncelikler</option>
+      <option value="high">Yüksek</option>
+      <option value="medium">Orta</option>
+      <option value="low">Düşük</option>
+    </select>
+    <input type="search" id="filterSearch" placeholder="Kişi veya konu ara...">
+    <div class="threshold">Acil eşiği: <input type="number" id="urgentThreshold" min="1" max="168" value="24"> saat</div>
+    <div class="spacer"></div>
+    <div class="task-count-pill" id="taskCountPill"></div>
+  </div>
+
+  <section id="listView"></section>
+
+  <div class="footer-note">Veriler yalnızca bu cihazdaki tarayıcında saklanır.</div>
+</main>
+</div>
+
+<!-- Request Modal -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="modalTitle">Yeni Görev</h2>
+      <button class="icon-btn" id="closeModalBtn">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Kaynak</label>
+        <div class="choice-row" id="sourceChoice">
+          <label id="srcWhatsapp" data-v="whatsapp"><input type="radio" name="fSource" value="whatsapp">WhatsApp</label>
+          <label id="srcEmail" data-v="email"><input type="radio" name="fSource" value="email">E-posta</label>
+          <label id="srcPhone" data-v="phone"><input type="radio" name="fSource" value="phone">Telefon</label>
+          <label id="srcInstagram" data-v="instagram"><input type="radio" name="fSource" value="instagram">Instagram</label>
+          <label id="srcOther" data-v="other"><input type="radio" name="fSource" value="other">Diğer</label>
+        </div>
+      </div>
+      <div class="row-2">
+        <div class="field">
+          <label>Kimden</label>
+          <input type="text" id="fContact" placeholder="Örn. Ahmet Bey, Firma X">
+        </div>
+        <div class="field">
+          <label>Geldiği zaman</label>
+          <input type="datetime-local" id="fReceivedAt">
+        </div>
+      </div>
+      <div class="field">
+        <label>Konu / özet</label>
+        <input type="text" id="fSummary" placeholder="Örn. Sipariş durumu soruyor">
+      </div>
+      <div class="field">
+        <label>Öncelik</label>
+        <div class="choice-row">
+          <label id="labelLow"><input type="radio" name="fPrio" value="low">Düşük</label>
+          <label id="labelMedium"><input type="radio" name="fPrio" value="medium">Orta</label>
+          <label id="labelHigh"><input type="radio" name="fPrio" value="high">Yüksek</label>
+        </div>
+      </div>
+      <div class="field">
+        <label>Not</label>
+        <textarea id="fNotes" placeholder="Ek bilgi..."></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-danger btn-sm" id="deleteReqBtn" style="display:none;">Sil</button>
+      <div class="right">
+        <button class="btn btn-ghost" id="cancelModalBtn">Vazgeç</button>
+        <button class="btn btn-primary" id="saveReqBtn">Kaydet</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  var STORAGE_KEY = "request_tracker_v1";
+  var THEME_KEY = "tracker_theme";
+  var THRESHOLD_KEY = "tracker_urgent_threshold";
+  var BANNER_DISMISS_KEY = "tracker_banner_dismissed_at";
+  var items = [];
+  var currentTab = "pending";
+  var editingId = null;
+
+  var SOURCES = {
+    whatsapp:  {label:'WhatsApp',  initial:'W', bg:'rgba(34,122,92,0.16)',  fg:'#227a5c'},
+    email:     {label:'E-posta',   initial:'E', bg:'rgba(63,111,174,0.16)', fg:'#3f6fae'},
+    phone:     {label:'Telefon',   initial:'T', bg:'rgba(184,135,43,0.18)', fg:'#a9791f'},
+    instagram: {label:'Instagram', initial:'I', bg:'rgba(193,90,138,0.16)', fg:'#c15a8a'},
+    other:     {label:'Diğer',     initial:'D', bg:'rgba(91,100,114,0.18)', fg:'#5b6472'}
+  };
+
+  function uid(){ return 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+  function escapeHtml(s){
+    return (s||'').replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function prioLabel(p){ return {low:'Düşük',medium:'Orta',high:'Yüksek'}[p] || ''; }
+
+  function pad(n){ return ('0'+n).slice(-2); }
+  function toLocalInputValue(ts){
+    var d = new Date(ts);
+    return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+pad(d.getHours())+':'+pad(d.getMinutes());
+  }
+  function fromLocalInputValue(str){
+    if(!str) return Date.now();
+    var t = new Date(str).getTime();
+    return isNaN(t) ? Date.now() : t;
+  }
+
+  function getThreshold(){
+    var v = parseFloat(localStorage.getItem(THRESHOLD_KEY));
+    return (v && v>0) ? v : 24;
+  }
+  function setThreshold(h){ try{ localStorage.setItem(THRESHOLD_KEY, String(h)); }catch(e){} }
+
+  function formatAge(ts){
+    var mins = Math.floor((Date.now()-ts)/60000);
+    if(mins < 1) return 'az önce';
+    if(mins < 60) return mins+' dk önce';
+    var hours = Math.floor(mins/60);
+    if(hours < 24) return hours+' sa önce';
+    var days = Math.floor(hours/24);
+    var remHours = hours%24;
+    return days+' gün'+(remHours ? ' '+remHours+' sa' : '')+' önce';
+  }
+  function formatDuration(ms){
+    var mins = Math.round(ms/60000);
+    if(mins < 60) return mins+' dk';
+    var hours = Math.floor(mins/60);
+    if(hours < 24) return hours+' sa '+(mins%60)+' dk';
+    var days = Math.floor(hours/24);
+    return days+' gün '+(hours%24)+' sa';
+  }
+  function ageClass(item){
+    if(item.status==='done') return '';
+    var hours = (Date.now()-item.receivedAt)/3600000;
+    var urgent = getThreshold();
+    var warn = Math.max(1, urgent/4);
+    if(hours >= urgent) return 'age-urgent';
+    if(hours >= warn) return 'age-warn';
+    return 'age-fresh';
+  }
+
+  /* ---------------- persistence ---------------- */
+  function loadItems(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      items = raw ? JSON.parse(raw) : seedItems();
+    }catch(e){ items = seedItems(); }
+  }
+  function saveItems(){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); }catch(e){}
+  }
+  function seedItems(){
+    var now = Date.now();
+    return [
+      {id:uid(), source:'whatsapp', contact:'Örnek Müşteri', summary:'Sipariş ne zaman kargoya verilecek diye soruyor', notes:'Bu bir örnek kayıt — düzenleyebilir ya da silebilirsin.', priority:'high', receivedAt: now - 26*3600000, status:'pending', notifiedUrgent:false, resolvedAt:null},
+      {id:uid(), source:'email', contact:'Tedarikçi A.Ş.', summary:'Fiyat teklifi bekliyor', notes:'', priority:'medium', receivedAt: now - 3*3600000, status:'pending', notifiedUrgent:false, resolvedAt:null}
+    ];
+  }
+
+  /* ---------------- rendering ---------------- */
+  function sourceSet(){
+    var set = {};
+    items.forEach(function(it){ set[it.source]=true; });
+    return Object.keys(set);
+  }
+  function refreshSourceOptions(){
+    var sel = document.getElementById('filterSource');
+    var cur = sel.value;
+    var sources = sourceSet();
+    sel.innerHTML = '<option value="">Tüm kaynaklar</option>' +
+      sources.map(function(s){ return '<option value="'+s+'">'+(SOURCES[s]?SOURCES[s].label:s)+'</option>'; }).join('');
+    sel.value = sources.indexOf(cur)>=0 ? cur : '';
+  }
+
+  function getFiltered(){
+    var src = document.getElementById('filterSource').value;
+    var prio = document.getElementById('filterPriority').value;
+    var q = document.getElementById('filterSearch').value.trim().toLowerCase();
+    return items.filter(function(it){
+      if(src && it.source !== src) return false;
+      if(prio && it.priority !== prio) return false;
+      if(q && (it.contact||'').toLowerCase().indexOf(q)===-1 && (it.summary||'').toLowerCase().indexOf(q)===-1) return false;
+      return true;
+    });
+  }
+
+  function reqRowHtml(it){
+    var src = SOURCES[it.source] || SOURCES.other;
+    var cls = ageClass(it);
+    var metaParts = [];
+    metaParts.push('<span class="badge badge-prio prio-'+it.priority+'">'+prioLabel(it.priority)+'</span>');
+    if(it.status==='done'){
+      metaParts.push('<span class="badge badge-dur">✓ '+formatDuration(it.resolvedAt-it.receivedAt)+' içinde cevaplandı</span>');
+    } else {
+      var ageLbl = cls==='age-urgent' ? 'Acil — '+formatAge(it.receivedAt) : formatAge(it.receivedAt);
+      metaParts.push('<span class="badge badge-age '+cls+'">'+ageLbl+'</span>');
+    }
+    return '<div class="req-row '+cls+(it.status==='done'?' resolved':'')+'" data-id="'+it.id+'">'+
+      '<div class="req-source" style="background:'+src.bg+';color:'+src.fg+';" title="'+src.label+'">'+src.initial+'</div>'+
+      '<div class="req-main">'+
+        '<div class="req-top"><span class="req-contact">'+escapeHtml(it.contact||'İsimsiz')+'</span><span class="req-summary">'+escapeHtml(it.summary||'')+'</span></div>'+
+        '<div class="req-meta">'+metaParts.join('')+'</div>'+
+      '</div>'+
+      '<div class="req-actions">'+
+        (it.status==='done'
+          ? '<button class="btn btn-ghost btn-sm reopen-btn" data-id="'+it.id+'">Geri aç</button>'
+          : '<button class="btn btn-primary btn-sm resolve-btn" data-id="'+it.id+'">✓ Cevaplandı</button>')+
+      '</div>'+
+    '</div>';
+  }
+
+  function renderList(){
+    var filtered = getFiltered().filter(function(it){
+      return currentTab==='pending' ? it.status!=='done' : it.status==='done';
+    });
+    filtered.sort(function(a,b){
+      if(currentTab==='pending') return a.receivedAt - b.receivedAt; // oldest/most urgent first
+      return b.resolvedAt - a.resolvedAt; // most recently resolved first
+    });
+    var root = document.getElementById('listView');
+    if(!filtered.length){
+      root.innerHTML = '<div class="empty-hint">'+(currentTab==='pending' ? 'Bekleyen görev yok 🎉' : 'Henüz cevaplanan görev yok')+'</div>';
+      return;
+    }
+    root.innerHTML = '<div class="req-list">'+filtered.map(reqRowHtml).join('')+'</div>';
+
+    root.querySelectorAll('.req-row').forEach(function(el){
+      el.addEventListener('click', function(e){
+        if(e.target.closest('.resolve-btn') || e.target.closest('.reopen-btn')) return;
+        openModal(el.getAttribute('data-id'));
+      });
+    });
+    root.querySelectorAll('.resolve-btn').forEach(function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        var it = items.find(function(x){return x.id===btn.getAttribute('data-id');});
+        if(it){ it.status='done'; it.resolvedAt=Date.now(); saveItems(); scheduleNativeReminder(it); renderAll(); }
+      });
+    });
+    root.querySelectorAll('.reopen-btn').forEach(function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        var it = items.find(function(x){return x.id===btn.getAttribute('data-id');});
+        if(it){ it.status='pending'; it.resolvedAt=null; it.notifiedUrgent=false; saveItems(); scheduleNativeReminder(it); renderAll(); }
+      });
+    });
+  }
+
+  function renderBanner(){
+    var urgent = items.filter(function(it){ return it.status!=='done' && ageClass(it)==='age-urgent'; }).length;
+    var slot = document.getElementById('bannerSlot');
+    var dismissKey = localStorage.getItem(BANNER_DISMISS_KEY);
+    var tenMinBucket = Math.floor(Date.now()/600000); // re-show every ~10 min even if dismissed
+    var dismissed = dismissKey === String(tenMinBucket);
+    if(urgent===0 || dismissed){ slot.innerHTML=''; return; }
+    slot.innerHTML = '<div class="banner">⚠️ <b>'+urgent+'</b> görev acil eşiğini aştı, hâlâ cevap bekliyor.'+
+      '<button class="banner-close" id="bannerCloseBtn">✕</button></div>';
+    document.getElementById('bannerCloseBtn').addEventListener('click', function(){
+      localStorage.setItem(BANNER_DISMISS_KEY, String(tenMinBucket));
+      slot.innerHTML='';
+    });
+  }
+
+  /* ---------------- notifications ---------------- */
+  var CAP_NATIVE = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  var LocalNotif = CAP_NATIVE && window.Capacitor.Plugins ? window.Capacitor.Plugins.LocalNotifications : null;
+  var nativeNotifGranted = false;
+
+  function notifIdFor(id){
+    var h = 0;
+    for(var i=0;i<id.length;i++){ h = (h*31 + id.charCodeAt(i)) | 0; }
+    return Math.abs(h) % 2000000000;
+  }
+
+  function scheduleNativeReminder(it){
+    if(!LocalNotif || !nativeNotifGranted) return;
+    var nid = notifIdFor(it.id);
+    LocalNotif.cancel({ notifications:[{id:nid}] }).catch(function(){});
+    if(!it || it.status==='done') return;
+    var fireAt = it.receivedAt + getThreshold()*3600000;
+    var when = fireAt <= Date.now() ? new Date(Date.now()+15000) : new Date(fireAt);
+    LocalNotif.schedule({ notifications:[{
+      id:nid, title:'Acil: yanıt bekleyen görev',
+      body:(it.contact||'Bir görev')+' — '+(it.summary||'cevap bekliyor'),
+      schedule:{ at: when }
+    }]}).catch(function(){});
+  }
+  function rescheduleAllNative(){
+    if(!LocalNotif || !nativeNotifGranted) return;
+    items.forEach(scheduleNativeReminder);
+  }
+
+  var audioCtx = null;
+  function beep(){
+    try{
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      var o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type='sine'; o.frequency.value=740; g.gain.value=0.06;
+      o.connect(g); g.connect(audioCtx.destination); o.start();
+      g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime+0.35);
+      o.stop(audioCtx.currentTime+0.36);
+    }catch(e){}
+  }
+  function showToast(text){
+    var wrap = document.getElementById('toastWrap');
+    var el = document.createElement('div'); el.className='toast'; el.textContent=text;
+    wrap.appendChild(el);
+    setTimeout(function(){ el.remove(); }, 6000);
+  }
+  function updateNotifBtn(){
+    var btn = document.getElementById('notifBtn');
+    if(LocalNotif){ btn.classList.toggle('active', nativeNotifGranted); return; }
+    if(!('Notification' in window)){ btn.classList.remove('active'); return; }
+    btn.classList.toggle('active', Notification.permission==='granted');
+  }
+  function checkAndNotify(){
+    var hasNotifAPI = ('Notification' in window) && Notification.permission==='granted';
+    var changed = false;
+    items.forEach(function(it){
+      if(it.status==='done') return;
+      if(ageClass(it)!=='age-urgent') return;
+      if(it.notifiedUrgent) return;
+      var body = (it.contact||'Bir görev')+' — '+formatAge(it.receivedAt)+'dir cevap bekliyor.';
+      if(hasNotifAPI){
+        try{ new Notification('Acil: yanıt bekleyen görev', {body:body, tag:it.id}); }catch(e){}
+      }
+      showToast('⏰ '+body);
+      beep();
+      it.notifiedUrgent = true;
+      changed = true;
+    });
+    if(changed) saveItems();
+  }
+
+  /* ---------------- modal ---------------- */
+  function openModal(id){
+    editingId = id || null;
+    var it = id ? items.find(function(x){return x.id===id;}) : null;
+    document.getElementById('modalTitle').textContent = it ? 'Görevi Düzenle' : 'Yeni Görev';
+    var src = it ? it.source : 'whatsapp';
+    document.querySelectorAll('input[name="fSource"]').forEach(function(r){ r.checked = (r.value===src); });
+    updateSourceLabels();
+    document.getElementById('fContact').value = it ? (it.contact||'') : '';
+    document.getElementById('fReceivedAt').value = toLocalInputValue(it ? it.receivedAt : Date.now());
+    document.getElementById('fSummary').value = it ? (it.summary||'') : '';
+    document.getElementById('fNotes').value = it ? (it.notes||'') : '';
+    var prio = it ? it.priority : 'medium';
+    document.querySelectorAll('input[name="fPrio"]').forEach(function(r){ r.checked = (r.value===prio); });
+    updatePrioLabels();
+    document.getElementById('deleteReqBtn').style.display = it ? 'inline-flex' : 'none';
+    document.getElementById('overlay').classList.add('show');
+    setTimeout(function(){ document.getElementById('fContact').focus(); }, 30);
+  }
+  function closeModal(){
+    document.getElementById('overlay').classList.remove('show');
+    editingId = null;
+  }
+  function updateSourceLabels(){
+    Object.keys(SOURCES).forEach(function(s){
+      var lbl = document.querySelector('[data-v="'+s+'"]');
+      var checked = lbl.querySelector('input').checked;
+      lbl.classList.toggle('sel-src', checked);
+    });
+  }
+  function updatePrioLabels(){
+    ['low','medium','high'].forEach(function(p){
+      var lbl = document.getElementById('label'+p.charAt(0).toUpperCase()+p.slice(1));
+      lbl.classList.toggle('sel-'+p, lbl.querySelector('input').checked);
+    });
+  }
+
+  function saveReq(){
+    var contact = document.getElementById('fContact').value.trim();
+    var summary = document.getElementById('fSummary').value.trim();
+    if(!contact && !summary){
+      document.getElementById('fContact').focus();
+      return;
+    }
+    var source = 'whatsapp';
+    document.querySelectorAll('input[name="fSource"]').forEach(function(r){ if(r.checked) source = r.value; });
+    var prio = 'medium';
+    document.querySelectorAll('input[name="fPrio"]').forEach(function(r){ if(r.checked) prio = r.value; });
+    var data = {
+      source:source, contact:contact, summary:summary,
+      notes: document.getElementById('fNotes').value.trim(),
+      priority:prio,
+      receivedAt: fromLocalInputValue(document.getElementById('fReceivedAt').value)
+    };
+    if(editingId){
+      var it = items.find(function(x){return x.id===editingId;});
+      Object.assign(it, data);
+      it.notifiedUrgent = false;
+    } else {
+      data.id = uid(); data.status='pending'; data.notifiedUrgent=false; data.resolvedAt=null;
+      items.push(data);
+    }
+    saveItems();
+    var savedItem = editingId ? items.find(function(x){return x.id===editingId;}) : items[items.length-1];
+    scheduleNativeReminder(savedItem);
+    closeModal(); renderAll();
+  }
+  function deleteReq(){
+    if(!editingId) return;
+    if(LocalNotif) LocalNotif.cancel({ notifications:[{id:notifIdFor(editingId)}] }).catch(function(){});
+    items = items.filter(function(x){return x.id!==editingId;});
+    saveItems(); closeModal(); renderAll();
+  }
+
+  /* ---------------- tabs / theme ---------------- */
+  function switchTab(tab){
+    currentTab = tab;
+    document.querySelectorAll('.tab').forEach(function(el){ el.classList.toggle('active', el.getAttribute('data-tab')===tab); });
+    renderAll();
+  }
+  function applyTheme(mode){
+    document.body.classList.toggle('dark', mode==='dark');
+    document.getElementById('themeBtn').textContent = mode==='dark' ? '☀️' : '🌙';
+    localStorage.setItem(THEME_KEY, mode);
+  }
+
+  function renderAll(){
+    refreshSourceOptions();
+    renderList();
+    var pendingCount = items.filter(function(it){return it.status!=='done';}).length;
+    document.getElementById('taskCountPill').textContent = pendingCount + ' görev bekliyor';
+    renderBanner();
+  }
+
+  function updateTodayLabel(){
+    var d = new Date();
+    var days=["Pazar","Pazartesi","Salı","Çarşamba","Perşembe","Cuma","Cumartesi"];
+    var months=["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"];
+    document.getElementById('todayLabel').textContent = days[d.getDay()]+', '+d.getDate()+' '+months[d.getMonth()]+' '+d.getFullYear();
+  }
+
+  function init(){
+    loadItems();
+    updateTodayLabel();
+    applyTheme(localStorage.getItem(THEME_KEY) || 'dark');
+    document.getElementById('urgentThreshold').value = getThreshold();
+    renderAll();
+    checkAndNotify();
+    setInterval(checkAndNotify, 60000);
+    setInterval(renderAll, 60000);
+    setInterval(updateTodayLabel, 60000);
+
+    if(LocalNotif){
+      LocalNotif.checkPermissions().then(function(res){
+        nativeNotifGranted = res && res.display === 'granted';
+        updateNotifBtn();
+        if(nativeNotifGranted) rescheduleAllNative();
+      }).catch(function(){ updateNotifBtn(); });
+    } else {
+      updateNotifBtn();
+    }
+
+    document.querySelectorAll('.tab').forEach(function(el){
+      el.addEventListener('click', function(){ switchTab(el.getAttribute('data-tab')); });
+    });
+    document.getElementById('addReqBtn').addEventListener('click', function(){ openModal(null); });
+    document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+    document.getElementById('cancelModalBtn').addEventListener('click', closeModal);
+    document.getElementById('overlay').addEventListener('click', function(e){ if(e.target.id==='overlay') closeModal(); });
+    document.getElementById('saveReqBtn').addEventListener('click', saveReq);
+    document.getElementById('deleteReqBtn').addEventListener('click', deleteReq);
+    document.querySelectorAll('input[name="fSource"]').forEach(function(r){ r.addEventListener('change', updateSourceLabels); });
+    document.querySelectorAll('input[name="fPrio"]').forEach(function(r){ r.addEventListener('change', updatePrioLabels); });
+
+    document.getElementById('filterSource').addEventListener('change', renderAll);
+    document.getElementById('filterPriority').addEventListener('change', renderAll);
+    document.getElementById('filterSearch').addEventListener('input', renderAll);
+    document.getElementById('urgentThreshold').addEventListener('change', function(e){
+      var v = parseFloat(e.target.value) || 24;
+      setThreshold(v);
+      renderAll();
+      rescheduleAllNative();
+    });
+
+    document.getElementById('notifBtn').addEventListener('click', function(){
+      if(LocalNotif){
+        if(nativeNotifGranted){ showToast('Bildirimler zaten açık.'); return; }
+        LocalNotif.requestPermissions().then(function(res){
+          nativeNotifGranted = res && res.display === 'granted';
+          updateNotifBtn();
+          showToast(nativeNotifGranted ? 'Bildirimler açıldı 🎉' : 'Bildirim izni verilmedi.');
+          if(nativeNotifGranted) rescheduleAllNative();
+        }).catch(function(){ showToast('Bildirim izni alınamadı.'); });
+        return;
+      }
+      if(!('Notification' in window)){ showToast('Bu tarayıcı bildirimleri desteklemiyor.'); return; }
+      if(Notification.permission==='granted'){ showToast('Bildirimler zaten açık.'); updateNotifBtn(); return; }
+      Notification.requestPermission().then(function(perm){
+        updateNotifBtn();
+        showToast(perm==='granted' ? 'Bildirimler açıldı 🎉' : 'Bildirim izni verilmedi.');
+        if(perm==='granted') checkAndNotify();
+      });
+    });
+    document.getElementById('themeBtn').addEventListener('click', function(){
+      applyTheme(document.body.classList.contains('dark') ? 'light' : 'dark');
+    });
+    document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeModal(); });
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
+})();
+</script>
+</body>
+</html>
